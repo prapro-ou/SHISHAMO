@@ -33,9 +33,14 @@ public class CameraFollow : MonoBehaviour
     [Header("カメラ操作解禁")]
     public float cameraControlDelay = 0.7f;
 
-    [Header("左右先読み")]
-    public float lookAheadDistance = 2f;
-    public float lookAheadSmooth = 5f;
+    [Header("視線設定")]
+    public float lookHeight = 0.5f;
+
+    [Header("上下デッドゾーン")]
+    public float verticalDeadZone = 2f;
+
+    [Header("上下追従速度")]
+    public float verticalFollowSpeed = 3f;
 
     private Rigidbody targetRb;
 
@@ -47,7 +52,7 @@ public class CameraFollow : MonoBehaviour
     private float moveTimer;
     private float currentFollowSpeed;
 
-    private Vector3 currentLookAhead;
+    private float currentLookY;
 
     void Start()
     {
@@ -61,6 +66,9 @@ public class CameraFollow : MonoBehaviour
         if (target != null)
         {
             targetRb = target.GetComponent<Rigidbody>();
+
+            currentLookY =
+                target.position.y + lookHeight;
         }
     }
 
@@ -76,47 +84,57 @@ public class CameraFollow : MonoBehaviour
             speed = targetRb.linearVelocity.magnitude;
         }
 
-        bool isMoving = speed > 0.1f;
+        bool isMoving =
+            speed > 0.1f;
 
         if (isMoving)
         {
             moveTimer += Time.deltaTime;
 
-            currentFollowSpeed = movingFollowSpeed;
+            currentFollowSpeed =
+                movingFollowSpeed;
         }
         else
         {
             moveTimer = 0f;
 
-            currentFollowSpeed = Mathf.Lerp(
-                currentFollowSpeed,
-                normalFollowSpeed,
-                followRestoreSpeed * Time.deltaTime
-            );
+            currentFollowSpeed =
+                Mathf.Lerp(
+                    currentFollowSpeed,
+                    normalFollowSpeed,
+                    followRestoreSpeed *
+                    Time.deltaTime
+                );
         }
 
         // ズーム
-        float wheel = Input.mouseScrollDelta.y;
+        float wheel =
+            Input.mouseScrollDelta.y;
 
         if (wheel != 0)
         {
-            targetDistance -= wheel * zoomSpeed;
+            targetDistance -=
+                wheel * zoomSpeed;
 
-            targetDistance = Mathf.Clamp(
-                targetDistance,
-                minDistance,
-                maxDistance
-            );
+            targetDistance =
+                Mathf.Clamp(
+                    targetDistance,
+                    minDistance,
+                    maxDistance
+                );
         }
 
-        currentDistance = Mathf.Lerp(
-            currentDistance,
-            targetDistance,
-            zoomSmoothSpeed * Time.deltaTime
-        );
+        currentDistance =
+            Mathf.Lerp(
+                currentDistance,
+                targetDistance,
+                zoomSmoothSpeed *
+                Time.deltaTime
+            );
 
         // カメラ回転
-        bool canRotate = !isMoving;
+        bool canRotate =
+            !isMoving;
 
         if (isMoving)
         {
@@ -136,7 +154,7 @@ public class CameraFollow : MonoBehaviour
                 mouseSensitivity;
         }
 
-        // 距離に応じた高さ
+        // 距離によって高さ調整
         float currentHeight =
             Mathf.Lerp(
                 minHeight,
@@ -167,7 +185,8 @@ public class CameraFollow : MonoBehaviour
             target.position +
             offset;
 
-        bool canFollow = !isMoving;
+        bool canFollow =
+            !isMoving;
 
         if (isMoving)
         {
@@ -187,37 +206,34 @@ public class CameraFollow : MonoBehaviour
                 );
         }
 
-        // 左右のみ先読み
-        Vector3 desiredLookAhead =
-            Vector3.zero;
+        // 上下デッドゾーン
+        float targetLookY =
+            target.position.y + lookHeight;
 
-        if (targetRb != null)
+        float diff =
+            targetLookY - currentLookY;
+
+        if (Mathf.Abs(diff) >
+            verticalDeadZone)
         {
-            Vector3 horizontalVelocity =
-                targetRb.linearVelocity;
-
-            horizontalVelocity.y = 0f;
-
-            if (horizontalVelocity.magnitude > 0.1f)
-            {
-                desiredLookAhead =
-                    horizontalVelocity.normalized *
-                    lookAheadDistance;
-            }
+            currentLookY =
+                Mathf.Lerp(
+                    currentLookY,
+                    targetLookY,
+                    verticalFollowSpeed *
+                    Time.deltaTime
+                );
         }
 
-        currentLookAhead =
-            Vector3.Lerp(
-                currentLookAhead,
-                desiredLookAhead,
-                lookAheadSmooth *
-                Time.deltaTime
+        Vector3 lookPoint =
+            new Vector3(
+                target.position.x,
+                currentLookY,
+                target.position.z
             );
 
         transform.LookAt(
-            target.position +
-            Vector3.up * 0.5f +
-            currentLookAhead
+            lookPoint
         );
     }
 }
