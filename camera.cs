@@ -36,11 +36,12 @@ public class CameraFollow : MonoBehaviour
     [Header("視線設定")]
     public float lookHeight = 0.5f;
 
-    [Header("上下デッドゾーン")]
+    [Header("デッドゾーン")]
+    public float horizontalDeadZone = 1.5f;
     public float verticalDeadZone = 2f;
 
-    [Header("上下追従速度")]
-    public float verticalFollowSpeed = 3f;
+    [Header("視線追従速度")]
+    public float lookFollowSpeed = 3f;
 
     private Rigidbody targetRb;
 
@@ -52,6 +53,7 @@ public class CameraFollow : MonoBehaviour
     private float moveTimer;
     private float currentFollowSpeed;
 
+    private float currentLookX;
     private float currentLookY;
 
     void Start()
@@ -67,8 +69,8 @@ public class CameraFollow : MonoBehaviour
         {
             targetRb = target.GetComponent<Rigidbody>();
 
-            currentLookY =
-                target.position.y + lookHeight;
+            currentLookX = target.position.x;
+            currentLookY = target.position.y + lookHeight;
         }
     }
 
@@ -84,8 +86,7 @@ public class CameraFollow : MonoBehaviour
             speed = targetRb.linearVelocity.magnitude;
         }
 
-        bool isMoving =
-            speed > 0.1f;
+        bool isMoving = speed > 0.1f;
 
         if (isMoving)
         {
@@ -133,8 +134,7 @@ public class CameraFollow : MonoBehaviour
             );
 
         // カメラ回転
-        bool canRotate =
-            !isMoving;
+        bool canRotate = !isMoving;
 
         if (isMoving)
         {
@@ -154,7 +154,7 @@ public class CameraFollow : MonoBehaviour
                 mouseSensitivity;
         }
 
-        // 距離によって高さ調整
+        // 距離に応じて高さ変更
         float currentHeight =
             Mathf.Lerp(
                 minHeight,
@@ -185,8 +185,7 @@ public class CameraFollow : MonoBehaviour
             target.position +
             offset;
 
-        bool canFollow =
-            !isMoving;
+        bool canFollow = !isMoving;
 
         if (isMoving)
         {
@@ -206,28 +205,73 @@ public class CameraFollow : MonoBehaviour
                 );
         }
 
-        // 上下デッドゾーン
+        float targetLookX =
+            target.position.x;
+
         float targetLookY =
-            target.position.y + lookHeight;
+            target.position.y +
+            lookHeight;
 
-        float diff =
-            targetLookY - currentLookY;
-
-        if (Mathf.Abs(diff) >
-            verticalDeadZone)
+        if (!isMoving)
         {
+            // 停止したら中央へ戻す
+            currentLookX =
+                Mathf.Lerp(
+                    currentLookX,
+                    target.position.x,
+                    lookFollowSpeed *
+                    Time.deltaTime
+                );
+
             currentLookY =
                 Mathf.Lerp(
                     currentLookY,
-                    targetLookY,
-                    verticalFollowSpeed *
+                    target.position.y +
+                    lookHeight,
+                    lookFollowSpeed *
                     Time.deltaTime
                 );
+        }
+        else
+        {
+            // 左右デッドゾーン
+            float diffX =
+                targetLookX -
+                currentLookX;
+
+            if (Mathf.Abs(diffX) >
+                horizontalDeadZone)
+            {
+                currentLookX =
+                    Mathf.Lerp(
+                        currentLookX,
+                        targetLookX,
+                        lookFollowSpeed *
+                        Time.deltaTime
+                    );
+            }
+
+            // 上下デッドゾーン
+            float diffY =
+                targetLookY -
+                currentLookY;
+
+            if (Mathf.Abs(diffY) >
+                verticalDeadZone)
+            {
+                currentLookY =
+                    Mathf.Lerp(
+                        currentLookY,
+                        targetLookY,
+                        lookFollowSpeed *
+                        Time.deltaTime
+                    );
+            }
         }
 
         Vector3 lookPoint =
             new Vector3(
-                target.position.x,
+                currentLookX,
                 currentLookY,
                 target.position.z
             );
