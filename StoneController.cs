@@ -14,6 +14,9 @@ public class StoneController : MonoBehaviour
     [Header("落下判定")]
     public float fallLimitY = -10f;
 
+    [Header("重力設定")]
+    public float gravityMultiplier = 1f;
+
     private Rigidbody rb;
     private Camera cam;
 
@@ -36,6 +39,18 @@ public class StoneController : MonoBehaviour
 
         lastShotPosition = transform.position;
         lastShotRotation = transform.rotation;
+    }
+
+    void FixedUpdate()
+    {
+        if (gravityMultiplier != 1f)
+        {
+            rb.AddForce(
+                Physics.gravity *
+                (gravityMultiplier - 1f),
+                ForceMode.Acceleration
+            );
+        }
     }
 
     void Update()
@@ -64,6 +79,13 @@ public class StoneController : MonoBehaviour
         {
             ReturnToPreviousShot();
         }
+
+        // 停止補助
+        if (rb.linearVelocity.magnitude < 0.05f)
+        {
+            rb.linearVelocity = Vector3.zero;
+            rb.angularVelocity = Vector3.zero;
+        }
     }
 
     void StartDrag()
@@ -73,19 +95,8 @@ public class StoneController : MonoBehaviour
             return;
         }
 
-        Ray ray =
-            cam.ScreenPointToRay(
-                Input.mousePosition
-            );
-
-        if (Physics.Raycast(ray, out RaycastHit hit))
-        {
-            if (hit.transform == transform)
-            {
-                dragging = true;
-                dragStartMouse = Input.mousePosition;
-            }
-        }
+        dragging = true;
+        dragStartMouse = Input.mousePosition;
     }
 
     void UpdateDrag()
@@ -113,7 +124,7 @@ public class StoneController : MonoBehaviour
 
         direction.Normalize();
 
-        // 坂道の法線を取得
+        // 坂道対応
         if (Physics.Raycast(
             transform.position + Vector3.up * 0.5f,
             Vector3.down,
@@ -188,7 +199,7 @@ public class StoneController : MonoBehaviour
         CurrentPower = 0f;
     }
 
-     public void ReturnToPreviousShot()
+    public void ReturnToPreviousShot()
     {
         dragging = false;
 
