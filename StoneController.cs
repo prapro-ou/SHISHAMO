@@ -15,7 +15,11 @@ public class StoneController : MonoBehaviour
     public float fallLimitY = -10f;
 
     [Header("重力設定")]
-    public float gravityMultiplier = 1f;
+    public float gravityMultiplier = 2f;
+
+    [Header("発射可能角度")]
+    [Range(0f, 180f)]
+    public float shotAngleLimit = 120f;
 
     private Rigidbody rb;
     private Camera cam;
@@ -104,7 +108,8 @@ public class StoneController : MonoBehaviour
         dragCurrentMouse = Input.mousePosition;
 
         Vector3 mouseDelta =
-            dragCurrentMouse - dragStartMouse;
+            dragCurrentMouse -
+            dragStartMouse;
 
         Vector3 cameraForward =
             cam.transform.forward;
@@ -122,20 +127,35 @@ public class StoneController : MonoBehaviour
             (-mouseDelta.y * cameraForward) +
             (-mouseDelta.x * cameraRight);
 
-        direction.Normalize();
+        direction.y = 0f;
 
-        // 坂道対応
-        if (Physics.Raycast(
-            transform.position + Vector3.up * 0.5f,
-            Vector3.down,
-            out RaycastHit hit,
-            3f))
+        if (direction.sqrMagnitude > 0.001f)
         {
-            direction =
-                Vector3.ProjectOnPlane(
+            direction.Normalize();
+
+            float angle =
+                Vector3.SignedAngle(
+                    cameraForward,
                     direction,
-                    hit.normal
-                ).normalized;
+                    Vector3.up
+                );
+
+            angle =
+                Mathf.Clamp(
+                    angle,
+                    -shotAngleLimit,
+                    shotAngleLimit
+                );
+
+            direction =
+                Quaternion.Euler(
+                    0f,
+                    angle,
+                    0f
+                ) *
+                cameraForward;
+
+            direction.Normalize();
         }
 
         CurrentDirection = direction;
@@ -155,7 +175,8 @@ public class StoneController : MonoBehaviour
         dragging = false;
 
         Vector3 mouseDelta =
-            dragCurrentMouse - dragStartMouse;
+            dragCurrentMouse -
+            dragStartMouse;
 
         float dragDistance =
             mouseDelta.magnitude / 100f;

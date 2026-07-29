@@ -9,6 +9,9 @@ public class StoneUI : MonoBehaviour
     public float minArrowLength = 0.5f;
     public float maxArrowLength = 4f;
 
+    [Header("表示開始パワー")]
+    public float arrowVisiblePower = 0.05f;
+
     private LineRenderer line;
 
     void Start()
@@ -30,13 +33,23 @@ public class StoneUI : MonoBehaviour
             return;
         }
 
-        line.enabled = true;
+        // パワーが小さい時は非表示
+        if (stone.CurrentPower < arrowVisiblePower)
+        {
+            line.enabled = false;
+            return;
+        }
 
         Vector3 direction =
             stone.CurrentDirection;
 
         if (direction.magnitude < 0.01f)
+        {
+            line.enabled = false;
             return;
+        }
+
+        line.enabled = true;
 
         float length =
             Mathf.Lerp(
