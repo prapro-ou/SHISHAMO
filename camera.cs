@@ -10,60 +10,42 @@ public class CameraFollow : MonoBehaviour
     public float maxDistance = 15f;
 
     [Header("高さ設定")]
-    public float minHeight = 1.5f;
-    public float maxHeight = 5f;
+    public float minHeight = 2f;
+    public float maxHeight = 4f;
+
+    [Header("回転設定")]
+    public float mouseSensitivity = 3f;
 
     [Header("ズーム設定")]
     public float zoomSpeed = 2f;
     public float zoomSmoothSpeed = 8f;
 
-    [Header("回転設定")]
-    public float mouseSensitivity = 3f;
-
-    [Header("追従速度")]
-    public float normalFollowSpeed = 12f;
-    public float movingFollowSpeed = 2f;
-
-    [Header("追従速度復帰")]
-    public float followRestoreSpeed = 2f;
-
-    [Header("発射後ディレイ")]
-    public float followDelay = 0.7f;
-
-    [Header("カメラ操作解禁")]
-    public float cameraControlDelay = 0.7f;
-
-    [Header("視線設定")]
-    public float lookHeight = 0.5f;
-
     [Header("デッドゾーン")]
-    public float horizontalDeadZone = 1.5f;
+    public float horizontalDeadZone = 2f;
     public float verticalDeadZone = 2f;
 
     [Header("視線追従速度")]
     public float lookFollowSpeed = 3f;
 
-    private Rigidbody targetRb;
+    [Header("注視点高さ")]
+    public float lookHeight = 0.5f;
 
     private float yaw;
 
     private float currentDistance;
     private float targetDistance;
 
-    private float moveTimer;
-    private float currentFollowSpeed;
-
     private float currentLookX;
     private float currentLookY;
 
+    private Rigidbody targetRb;
+
     void Start()
     {
-        yaw = transform.eulerAngles.y;
-
         currentDistance = defaultDistance;
         targetDistance = defaultDistance;
 
-        currentFollowSpeed = normalFollowSpeed;
+        yaw = transform.eulerAngles.y;
 
         if (target != null)
         {
@@ -79,40 +61,17 @@ public class CameraFollow : MonoBehaviour
         if (target == null)
             return;
 
-        float speed = 0f;
-
-        if (targetRb != null)
+        if (Input.GetMouseButton(1))
         {
-            speed = targetRb.linearVelocity.magnitude;
+            yaw +=
+                Input.GetAxis("Mouse X") *
+                mouseSensitivity;
         }
 
-        bool isMoving = speed > 0.1f;
-
-        if (isMoving)
-        {
-            moveTimer += Time.deltaTime;
-
-            currentFollowSpeed =
-                movingFollowSpeed;
-        }
-        else
-        {
-            moveTimer = 0f;
-
-            currentFollowSpeed =
-                Mathf.Lerp(
-                    currentFollowSpeed,
-                    normalFollowSpeed,
-                    followRestoreSpeed *
-                    Time.deltaTime
-                );
-        }
-
-        // ズーム
         float wheel =
             Input.mouseScrollDelta.y;
 
-        if (wheel != 0)
+        if (wheel != 0f)
         {
             targetDistance -=
                 wheel * zoomSpeed;
@@ -133,28 +92,6 @@ public class CameraFollow : MonoBehaviour
                 Time.deltaTime
             );
 
-        // カメラ回転
-        bool canRotate = !isMoving;
-
-        if (isMoving)
-        {
-            canRotate =
-                moveTimer >
-                cameraControlDelay;
-        }
-
-        if (canRotate &&
-            Input.GetMouseButton(1))
-        {
-            float mouseX =
-                Input.GetAxis("Mouse X");
-
-            yaw +=
-                mouseX *
-                mouseSensitivity;
-        }
-
-        // 距離に応じて高さ変更
         float currentHeight =
             Mathf.Lerp(
                 minHeight,
@@ -166,43 +103,13 @@ public class CameraFollow : MonoBehaviour
                 )
             );
 
-        Quaternion rotation =
-            Quaternion.Euler(
-                0f,
-                yaw,
-                0f
-            );
+        bool isMoving = false;
 
-        Vector3 offset =
-            rotation *
-            new Vector3(
-                0f,
-                currentHeight,
-                -currentDistance
-            );
-
-        Vector3 targetPosition =
-            target.position +
-            offset;
-
-        bool canFollow = !isMoving;
-
-        if (isMoving)
+        if (targetRb != null)
         {
-            canFollow =
-                moveTimer >
-                followDelay;
-        }
-
-        if (canFollow)
-        {
-            transform.position =
-                Vector3.Lerp(
-                    transform.position,
-                    targetPosition,
-                    currentFollowSpeed *
-                    Time.deltaTime
-                );
+            isMoving =
+                targetRb.linearVelocity.magnitude >
+                0.1f;
         }
 
         float targetLookX =
@@ -214,11 +121,10 @@ public class CameraFollow : MonoBehaviour
 
         if (!isMoving)
         {
-            // 停止したら中央へ戻す
             currentLookX =
                 Mathf.Lerp(
                     currentLookX,
-                    target.position.x,
+                    targetLookX,
                     lookFollowSpeed *
                     Time.deltaTime
                 );
@@ -226,15 +132,13 @@ public class CameraFollow : MonoBehaviour
             currentLookY =
                 Mathf.Lerp(
                     currentLookY,
-                    target.position.y +
-                    lookHeight,
+                    targetLookY,
                     lookFollowSpeed *
                     Time.deltaTime
                 );
         }
         else
         {
-            // 左右デッドゾーン
             float diffX =
                 targetLookX -
                 currentLookX;
@@ -251,7 +155,6 @@ public class CameraFollow : MonoBehaviour
                     );
             }
 
-            // 上下デッドゾーン
             float diffY =
                 targetLookY -
                 currentLookY;
@@ -269,15 +172,34 @@ public class CameraFollow : MonoBehaviour
             }
         }
 
-        Vector3 lookPoint =
+        Vector3 focusPoint =
             new Vector3(
                 currentLookX,
                 currentLookY,
                 target.position.z
             );
 
+        Quaternion rotation =
+            Quaternion.Euler(
+                0f,
+                yaw,
+                0f
+            );
+
+        Vector3 offset =
+            rotation *
+            new Vector3(
+                0f,
+                currentHeight,
+                -currentDistance
+            );
+
+        transform.position =
+            focusPoint +
+            offset;
+
         transform.LookAt(
-            lookPoint
+            focusPoint
         );
     }
 }

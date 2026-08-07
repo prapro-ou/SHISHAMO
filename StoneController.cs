@@ -3,6 +3,9 @@ using UnityEngine;
 [RequireComponent(typeof(Rigidbody))]
 public class StoneController : MonoBehaviour
 {
+    [Header("参照カメラ")]
+    public Camera targetCamera;
+
     [Header("ショット設定")]
     public float powerMultiplier = 10f;
     public float maxDragDistance = 5f;
@@ -19,10 +22,13 @@ public class StoneController : MonoBehaviour
 
     [Header("発射可能角度")]
     [Range(0f, 180f)]
-    public float shotAngleLimit = 120f;
+    public float shotAngleLimit = 180f;
+
+    public bool IsDragging => dragging;
+    public float CurrentPower { get; private set; }
+    public Vector3 CurrentDirection { get; private set; }
 
     private Rigidbody rb;
-    private Camera cam;
 
     private bool dragging;
 
@@ -32,14 +38,14 @@ public class StoneController : MonoBehaviour
     private Vector3 lastShotPosition;
     private Quaternion lastShotRotation;
 
-    public bool IsDragging => dragging;
-    public float CurrentPower { get; private set; }
-    public Vector3 CurrentDirection { get; private set; }
-
     void Start()
     {
         rb = GetComponent<Rigidbody>();
-        cam = Camera.main;
+
+        if (targetCamera == null)
+        {
+            targetCamera = Camera.main;
+        }
 
         lastShotPosition = transform.position;
         lastShotRotation = transform.rotation;
@@ -84,7 +90,6 @@ public class StoneController : MonoBehaviour
             ReturnToPreviousShot();
         }
 
-        // 停止補助
         if (rb.linearVelocity.magnitude < 0.05f)
         {
             rb.linearVelocity = Vector3.zero;
@@ -95,16 +100,19 @@ public class StoneController : MonoBehaviour
     void StartDrag()
     {
         if (rb.linearVelocity.magnitude > 0.1f)
-        {
             return;
-        }
 
         dragging = true;
+
         dragStartMouse = Input.mousePosition;
+        dragCurrentMouse = dragStartMouse;
     }
 
     void UpdateDrag()
     {
+        if (targetCamera == null)
+            return;
+
         dragCurrentMouse = Input.mousePosition;
 
         Vector3 mouseDelta =
@@ -112,13 +120,13 @@ public class StoneController : MonoBehaviour
             dragStartMouse;
 
         Vector3 cameraForward =
-            cam.transform.forward;
+            targetCamera.transform.forward;
 
         cameraForward.y = 0f;
         cameraForward.Normalize();
 
         Vector3 cameraRight =
-            cam.transform.right;
+            targetCamera.transform.right;
 
         cameraRight.y = 0f;
         cameraRight.Normalize();
@@ -133,29 +141,32 @@ public class StoneController : MonoBehaviour
         {
             direction.Normalize();
 
-            float angle =
-                Vector3.SignedAngle(
-                    cameraForward,
-                    direction,
-                    Vector3.up
-                );
+            if (shotAngleLimit < 180f)
+            {
+                float angle =
+                    Vector3.SignedAngle(
+                        cameraForward,
+                        direction,
+                        Vector3.up
+                    );
 
-            angle =
-                Mathf.Clamp(
-                    angle,
-                    -shotAngleLimit,
-                    shotAngleLimit
-                );
+                angle =
+                    Mathf.Clamp(
+                        angle,
+                        -shotAngleLimit,
+                        shotAngleLimit
+                    );
 
-            direction =
-                Quaternion.Euler(
-                    0f,
-                    angle,
-                    0f
-                ) *
-                cameraForward;
+                direction =
+                    Quaternion.Euler(
+                        0f,
+                        angle,
+                        0f
+                    ) *
+                    cameraForward;
 
-            direction.Normalize();
+                direction.Normalize();
+            }
         }
 
         CurrentDirection = direction;
@@ -182,13 +193,14 @@ public class StoneController : MonoBehaviour
             mouseDelta.magnitude / 100f;
 
         if (dragDistance < minDragDistance)
+        {
+            CurrentPower = 0f;
+            CurrentDirection = Vector3.zero;
             return;
+        }
 
         lastShotPosition = transform.position;
         lastShotRotation = transform.rotation;
-
-        Vector3 direction =
-            CurrentDirection.normalized;
 
         float power =
             Mathf.Clamp(
@@ -198,7 +210,7 @@ public class StoneController : MonoBehaviour
             );
 
         rb.AddForce(
-            direction *
+            CurrentDirection.normalized *
             power *
             powerMultiplier,
             ForceMode.Impulse
@@ -207,7 +219,7 @@ public class StoneController : MonoBehaviour
         Vector3 rotationAxis =
             Vector3.Cross(
                 Vector3.up,
-                direction
+                CurrentDirection
             );
 
         rb.AddTorque(
@@ -218,6 +230,7 @@ public class StoneController : MonoBehaviour
         );
 
         CurrentPower = 0f;
+        CurrentDirection = Vector3.zero;
     }
 
     public void ReturnToPreviousShot()
