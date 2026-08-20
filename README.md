@@ -14,3 +14,9 @@ AssetsのURLリスト
 
   5.コンクリートのマテリアル  Yughues Free Concrete Materials
 https://assetstore.unity.com/packages/2d/textures-materials/concrete/yughues-free-concrete-materials-12951
+
+  6.町のマテリアル　Demo City By Versatile Studio (Mobile Friendly)
+　https://assetstore.unity.com/packages/3d/environments/urban/demo-city-by-versatile-studio-mobile-friendly-269772
+  7.木のマテリアル　Mobile White Birch Tree
+  https://assetstore.unity.com/packages/3d/vegetation/trees/mobile-white-birch-tree-281448
+  
