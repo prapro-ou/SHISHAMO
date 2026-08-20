@@ -1,6 +1,7 @@
 using UnityEngine;
 
 [RequireComponent(typeof(Rigidbody))]
+[RequireComponent(typeof(AudioSource))]
 public class StoneController : MonoBehaviour
 {
     [Header("参照カメラ")]
@@ -24,11 +25,15 @@ public class StoneController : MonoBehaviour
     [Range(0f, 180f)]
     public float shotAngleLimit = 180f;
 
+    [Header("効果音")]
+    public AudioClip shotSound;
+
     public bool IsDragging => dragging;
     public float CurrentPower { get; private set; }
     public Vector3 CurrentDirection { get; private set; }
 
     private Rigidbody rb;
+    private AudioSource audioSource;
 
     private bool dragging;
 
@@ -41,6 +46,7 @@ public class StoneController : MonoBehaviour
     void Start()
     {
         rb = GetComponent<Rigidbody>();
+        audioSource = GetComponent<AudioSource>();
 
         if (targetCamera == null)
         {
@@ -90,6 +96,7 @@ public class StoneController : MonoBehaviour
             ReturnToPreviousShot();
         }
 
+        // 停止補助
         if (rb.linearVelocity.magnitude < 0.05f)
         {
             rb.linearVelocity = Vector3.zero;
@@ -209,8 +216,11 @@ public class StoneController : MonoBehaviour
                 maxDragDistance
             );
 
+        Vector3 shootDirection =
+            CurrentDirection.normalized;
+
         rb.AddForce(
-            CurrentDirection.normalized *
+            shootDirection *
             power *
             powerMultiplier,
             ForceMode.Impulse
@@ -219,7 +229,7 @@ public class StoneController : MonoBehaviour
         Vector3 rotationAxis =
             Vector3.Cross(
                 Vector3.up,
-                CurrentDirection
+                shootDirection
             );
 
         rb.AddTorque(
@@ -228,6 +238,14 @@ public class StoneController : MonoBehaviour
             rotationPower,
             ForceMode.Impulse
         );
+
+        // 発射音
+        if (shotSound != null)
+        {
+            audioSource.PlayOneShot(
+                shotSound
+            );
+        }
 
         CurrentPower = 0f;
         CurrentDirection = Vector3.zero;

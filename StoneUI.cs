@@ -33,7 +33,6 @@ public class StoneUI : MonoBehaviour
             return;
         }
 
-        // パワーが小さい時は非表示
         if (stone.CurrentPower < arrowVisiblePower)
         {
             line.enabled = false;
@@ -51,6 +50,30 @@ public class StoneUI : MonoBehaviour
 
         line.enabled = true;
 
+        // 色変更
+        Color arrowColor;
+
+        if (stone.CurrentPower < 0.5f)
+        {
+            arrowColor = Color.Lerp(
+                Color.blue,
+                Color.yellow,
+                stone.CurrentPower / 0.5f
+            );
+        }
+        else
+        {
+            arrowColor = Color.Lerp(
+                Color.yellow,
+                Color.red,
+                (stone.CurrentPower - 0.5f) / 0.5f
+            );
+        }
+
+        line.startColor = arrowColor;
+        line.endColor = arrowColor;
+
+        // 長さ変更
         float length =
             Mathf.Lerp(
                 minArrowLength,
@@ -69,7 +92,14 @@ public class StoneUI : MonoBehaviour
 
         line.positionCount = 2;
 
-        line.SetPosition(0, start);
-        line.SetPosition(1, end);
+        line.SetPosition(
+            0,
+            start
+        );
+
+        line.SetPosition(
+            1,
+            end
+        );
     }
 }
