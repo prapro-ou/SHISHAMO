@@ -20,4 +20,9 @@ https://assetstore.unity.com/packages/2d/textures-materials/concrete/yughues-fre
  
   7.木のマテリアル　Mobile White Birch Tree
   https://assetstore.unity.com/packages/3d/vegetation/trees/mobile-white-birch-tree-281448
-  
+
+  8.コンクリート
+  https://assetstore.unity.com/packages/3d/environments/concrete-props-pack-hdrp-urp-srp-306471?srsltid=AfmBOop0Wy6cTrFsXIAWk_2jfac51W79P3Bm8fdB6pDFtK3PTViDgVgO
+
+  9.柵（ガードレール）のオブジェクト
+  https://assetstore.unity.com/packages/3d/environments/urban/demo-city-by-versatile-studio-mobile-friendly-269772?locale=ja-JP&srsltid=AfmBOoqzjK-O3TUb06K3hz8TQvL5p4RK7JOE2go8x-9PNuCQnHNrlTYt
