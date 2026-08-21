@@ -7,8 +7,6 @@ public class ResultManager : MonoBehaviour
     [SerializeField]
     private TextMeshProUGUI clearTimeText;
 
-
-
     private void Start()
     {
         ShowResult();
@@ -17,12 +15,13 @@ public class ResultManager : MonoBehaviour
     private void ShowResult()
     {
         clearTimeText.text =
-            "Clear Time " + GameTimer.FormatTime(ResultData.ClearTime);
+            
+            GameTimer.FormatTime(ResultData.ClearTime);
     }
 
     public void OnClickRetry()
     {
-        SceneManager.LoadScene("SampleScene");
+        SceneManager.LoadScene(ResultData.PreviousSceneName);
     }
 
     public void OnClickCourseSelect()
