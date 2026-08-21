@@ -5,7 +5,7 @@ using TMPro;
 public class ResultManager : MonoBehaviour
 {
     [SerializeField]
-    private TextMeshProUGUI timeLabel;
+    private TextMeshProUGUI clearTimeText;
 
 
 
@@ -16,7 +16,8 @@ public class ResultManager : MonoBehaviour
 
     private void ShowResult()
     {
-        timeLabel.text = $"TIME : {GameData.ClearTime:F2}";
+        clearTimeText.text =
+            "Clear Time " + GameTimer.FormatTime(ResultData.ClearTime);
     }
 
     public void OnClickRetry()
